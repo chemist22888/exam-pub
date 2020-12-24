@@ -91,7 +91,6 @@ public class User implements UserDetails {
     public boolean isAccountNonExpired() {
         return isActive;
     }
-
     @Override
     @Transient
     @JsonIgnore
