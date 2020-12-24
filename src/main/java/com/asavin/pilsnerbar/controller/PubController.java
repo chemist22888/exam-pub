@@ -5,14 +5,17 @@ import com.asavin.pilsnerbar.entity.OrderSummary;
 import com.asavin.pilsnerbar.entity.Product;
 import com.asavin.pilsnerbar.entity.User;
 import com.asavin.pilsnerbar.json.OrderView;
+import com.asavin.pilsnerbar.json.UserView;
 import com.asavin.pilsnerbar.service.OrderService;
 import com.asavin.pilsnerbar.service.ProductService;
 import com.asavin.pilsnerbar.service.UserService;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,12 +32,20 @@ public class PubController {
     OrderService orderService;
 
     @GetMapping("/users")
-    List<User> getUsers(){
+    @JsonView(UserView.UserShortInfoView.class)
+    List<User> getUsers() {
         return userService.findAll();
     }
-    @GetMapping("/user/{id}")
-    User getUser(@PathVariable Long id){
-        return userService.findById(id);
+    @JsonView(UserView.UserFullInfoView.class)
+    @GetMapping("/users/{id}")
+    ObjectNode getUser(@PathVariable Long id){
+        ObjectMapper objectMapper = new ObjectMapper();
+        User user = userService.findById(id);
+        List<OrderSummary> userOrderSummary = orderService.orderSummary(user.getOrders());
+
+        ObjectNode objectNode = objectMapper.valueToTree(user);
+        objectNode.set("orders",objectMapper.valueToTree(userOrderSummary));
+        return objectNode;
     }
     @GetMapping("/drink-menu")
     List<Product>drinkMenu(){
@@ -54,10 +65,10 @@ public class PubController {
     @GetMapping("/summary/all")
     @JsonView(OrderView.SummaryAllView.class)
     List<OrderSummary> findAllOrders(){
-        return orderService.orderSummary();
+        return orderService.orderSummary(orderService.findAll());
     }
     @JsonView(OrderView.SummaryProductView.class)
-    @GetMapping("/summary/product")
+    @GetMapping(value = "/summary/product",produces = MediaType.APPLICATION_JSON_VALUE)
     Map<Product,List<OrderSummary>> findProductOrders(){
         return orderService.orderSummaryProduct();
     }

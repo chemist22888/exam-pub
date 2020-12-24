@@ -8,6 +8,12 @@ import java.util.Objects;
 @Table(name = "prdct")
 public class Product {
     Long id;
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
     String name;
     Double price;
     boolean isForAdult;

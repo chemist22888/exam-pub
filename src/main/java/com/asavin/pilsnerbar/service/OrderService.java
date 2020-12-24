@@ -13,6 +13,6 @@ public interface OrderService {
     List<Order> findAll();
 //    List<Order> findAllWithProduct(Product product);
 //    List<Order>findAllFromUser(User user);
-    List<OrderSummary> orderSummary();
+    List<OrderSummary> orderSummary(List<Order>orders);
     Map<Product, List<OrderSummary>> orderSummaryProduct();
 }

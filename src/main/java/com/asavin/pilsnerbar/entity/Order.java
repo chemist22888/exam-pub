@@ -2,7 +2,6 @@ package com.asavin.pilsnerbar.entity;
 
 import com.asavin.pilsnerbar.json.OrderView;
 import com.fasterxml.jackson.annotation.*;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 import javax.persistence.*;
 
@@ -12,24 +11,40 @@ import javax.persistence.*;
 public class Order {
 
     Long id;
-    @JsonView(OrderView.SummaryAllView.class)
-    @JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="name")
+//    @JsonView(OrderView.SummaryAllView.class)
+    @JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
     @JsonIdentityReference(alwaysAsId=true) // otherwise first ref as POJO, others as id
     Product product;
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonView(OrderView.SummaryProductView.class)
-    @JsonIdentityInfo(generator=ObjectIdGenerators.PropertyGenerator.class, property="user")
+//    @JsonView(OrderView.SummaryProductView.class)
+    @JsonIdentityInfo(generator=ObjectIdGenerators.PropertyGenerator.class, property="id")
     @JsonIdentityReference(alwaysAsId=true) // otherwise first ref as POJO, others as id
-    User fromUser;
+    User user;
+//    @JsonView({OrderView.SummaryProductView.class,OrderView.SummaryAllView.class})
+    Double price;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id",referencedColumnName = "id")
-    public User getFromUser() {
-        return fromUser;
+    public Order(Product product, User user, Double price) {
+        this.product = product;
+        this.user = user;
+        this.price = price;
     }
 
-    public void setFromUser(User fromUser) {
-        this.fromUser = fromUser;
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id",referencedColumnName = "id")
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User fromUser) {
+        this.user = fromUser;
     }
 //
 //    public User getToUser() {
@@ -40,10 +55,10 @@ public class Order {
 //        this.toUser = toUser;
 //    }
 
-    public Order(Product product,  User fromUser) {
+    public Order(Product product,  User user) {
         this.product = product;
 
-        this.fromUser = fromUser;
+        this.user = user;
     }
 
     public Order() {
@@ -60,7 +75,7 @@ public class Order {
         this.id = id;
     }
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
 //    @Fetch(FetchMode.JOIN)
     @JoinColumn(name = "product_id",referencedColumnName = "id")
     public Product getProduct() {

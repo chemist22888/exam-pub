@@ -35,7 +35,7 @@ public class OrderServiceImpl implements OrderService {
 
             if(user.getPocket()>=product.getPrice())
                 if(!product.isForAdult() || user.isAdult()){
-                    orderRepository.save(new Order(product, user));
+                    orderRepository.save(new Order(product, user,product.getPrice()));
                     user.setPocket((long) (user.getPocket()-product.getPrice()));
                     userRepository.save(user);
 
@@ -50,8 +50,27 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findAll();
     }
     @Override
-    public List<OrderSummary> orderSummary() {
+    public List<OrderSummary> orderSummary(List<Order>orders) {
+        return groupByProducts(orders);
+    }
+
+
+    @Override
+    public Map<Product, List<OrderSummary>> orderSummaryProduct() {
         List<Order> orders = findAll();
+        Map<Product, List<Order>> groupedOrders = orders.stream().collect(Collectors.groupingBy(Order::getProduct));
+
+        Map<Product, List<OrderSummary>> res = groupedOrders.entrySet().stream().collect(Collectors.toMap(
+                entry -> entry.getKey(),
+                entry -> entry.getValue().stream().collect
+                        (Collectors.groupingBy(Order::getUser, Collectors.counting())).
+                        entrySet().stream().map(groupEntry -> new OrderSummary(
+                            groupEntry.getKey(), groupEntry.getValue(),
+                            groupEntry.getValue() * entry.getKey().getPrice())
+                ).collect(Collectors.toList())));
+        return res;
+    }
+    private List<OrderSummary> groupByProducts(List<Order> orders){
         Map<Product, Long> collected =
                 orders.stream().collect(
                         Collectors.groupingBy(Order::getProduct, Collectors.counting()));
@@ -62,21 +81,5 @@ public class OrderServiceImpl implements OrderService {
                 collect(Collectors.toList());
 
         return result;
-    }
-
-    @Override
-    public Map<Product, List<OrderSummary>> orderSummaryProduct() {
-        List<Order> orders = findAll();
-        Map<Product, List<Order>> groupedOrders = orders.stream().collect(Collectors.groupingBy(Order::getProduct));
-
-        Map<Product, List<OrderSummary>> res = groupedOrders.entrySet().stream().collect(Collectors.toMap(
-                entry -> entry.getKey(),
-                entry -> entry.getValue().stream().collect
-                        (Collectors.groupingBy(Order::getFromUser, Collectors.counting())).
-                        entrySet().stream().map(groupEntry -> new OrderSummary(
-                            groupEntry.getKey(), groupEntry.getValue(),
-                            groupEntry.getValue() * entry.getKey().getPrice())
-                ).collect(Collectors.toList())));
-        return res;
     }
 }
